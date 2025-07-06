@@ -40,7 +40,7 @@ namespace LibPixelPet {
 				"ABGR1555" or "NDS"   => ABGR1555,
 				"RGB888"   or "24BPP" => RGB888,
 				"ARGB8888" or "32BPP" => ARGB8888,
-				"GB"                  => GameBoy,
+				"GB"       or "WS"    => GameBoy,
 				_                     => null,
 			};
 		}

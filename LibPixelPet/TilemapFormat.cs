@@ -6,6 +6,7 @@ namespace LibPixelPet {
 		public static readonly TilemapFormat GBA4BPP = new(8, 8, 0, 10, 10,  true, 11,  true, 12,  4,  0, 0,  true,  true, ColorFormat.Grayscale4BPP, BitmapEncoding.GameBoyAdvance);
 		public static readonly TilemapFormat GBA8BPP = new(8, 8, 0, 10, 10,  true, 11,  true, 12,  4,  0, 0,  true,  true, ColorFormat.Grayscale8BPP, BitmapEncoding.GameBoyAdvance);
 		public static readonly TilemapFormat NDSTEX5 = new(4, 4, 0,  0,  0, false,  0, false,  0, 14, 14, 2, false,  true, ColorFormat.Grayscale2BPP, BitmapEncoding.NintendoDSTexture);
+		public static readonly TilemapFormat WS      = new(8, 8, 0,  9, 14,  true, 15,  true,  9,  4,  0, 0,  true,  true, ColorFormat.GameBoy, 	  BitmapEncoding.WonderSwan);
 
 		/// <summary>
 		/// Gets a tilemap format with the specified name, or null if no such tilemap format exists.
@@ -18,6 +19,7 @@ namespace LibPixelPet {
 				"GBA-4BPP" or "NDS-4BPP" => GBA4BPP,
 				"GBA-8BPP" or "NDS-8BPP" => GBA8BPP,
 				"NDS-TEX5"               => NDSTEX5,
+				"WS"                     => WS,
 				_                        => null,
 			};
 		}
