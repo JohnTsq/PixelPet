@@ -2,116 +2,116 @@
 
 [![build](https://github.com/Prof9/PixelPet/actions/workflows/build.yaml/badge.svg)](https://github.com/Prof9/PixelPet/actions)
 
-PixelPet is an image processing tool for retro games modding. It allows you to automatize converting common image files (such as PNG) to the binary formats supported by retro consoles. You can also go the other way, using PixelPet to extract and render binary images from game ROMs.
+PixelPet 是一个用于复古游戏修改的图像处理工具。它可以自动化地将常见的图像文件（如 PNG）转换为复古主机支持的二进制格式。你也可以反向操作，使用 PixelPet 从游戏 ROM 中提取和渲染二进制图像。
 
-At the moment, PixelPet is geared mostly towards the Game Boy Advance and Nintendo DS family of systems, but should be easy to extend to other systems.
+目前，PixelPet 主要面向 Game Boy Advance 和 Nintendo DS 系列系统，但也很容易扩展到其他系统。
 
-Note that PixelPet is a work-in-progress, and new features and functionality are added as the need for them arises. As such, the information described below is subject to change.
+请注意，PixelPet 仍在开发中，新的功能会根据需要不断添加。因此，以下描述的信息可能会发生变化。
 
-## Workbench
+## 工作台（Workbench）
 
-Internally PixelPet has a "workbench" that holds the main objects that it's processing on. Each of the commands supported by PixelPet operates on one or more of these objects. In this sense, PixelPet mimics the video system used by retro consoles.
+PixelPet 内部有一个“工作台”，用于保存正在处理的主要对象。PixelPet 支持的每个命令都作用于一个或多个这些对象。从这个意义上说，PixelPet 模仿了复古主机的视频系统。
 
-The objects held by the workbench include:
+工作台中包含的对象有：
 
- *  Set of palettes.
- *  Bitmap image.
- *  Stream of bytes.
- *  Tileset.
- *  Tilemap.
+ *  调色板集合（Set of palettes）
+ *  位图图像（Bitmap image）
+ *  字节流（Stream of bytes）
+ *  图块集（Tileset）
+ *  图块地图（Tilemap）
 
-For instance, the loaded bitmap image can be converted to a combination of tileset + tilemap, which can then be output to a bytestream. Or vice versa, a tileset and tilemap can be read from a bytestream, then used to render a new bitmap image.
+例如，加载的位图图像可以被转换为图块集 + 图块地图的组合，然后可以输出为字节流。反之，也可以从字节流读取图块集和图块地图，然后用来渲染新的位图图像。
 
-### Palettes
+### 调色板（Palettes）
 
-Every palette in PixelPet is assigned a unique palette slot number. Whenever a new palette is added, it gets the lowest unclaimed palette slot number (starting at 0), but it is also possible to manually specify the palette slot for each palette. With this mechanism, PixelPet fully supports generating and rendering multi-palette tilesets and tilemaps.
+PixelPet 中的每个调色板都分配有唯一的调色板槽编号。每当添加新调色板时，它会获得当前未被占用的最小槽编号（从 0 开始），当然也可以手动指定调色板槽编号。通过这种机制，PixelPet 完全支持生成和渲染多调色板的图块集和图块地图。
 
-A palette can hold any number of colors, but a palette may have a maximum number of colors set; if you attempt to add any colors beyond the maximum, an error is thrown. The colors can be in any of the supported formats, such as 24-bit and 15-bit, and can be converted between formats with certain commands.
+调色板可以包含任意数量的颜色，但可以设置最大颜色数；如果尝试添加超出最大数量的颜色，则会抛出错误。颜色可以采用任何支持的格式，如 24 位和 15 位，并可通过特定命令在格式间转换。
 
-### Bitmap
+### 位图（Bitmap）
 
-The bitmap is simply a full image that is being operated on. Internally this is an array of integers, one per pixel. The bitmap can be imported from various file formats; this has not been extensively tested, however, so using standard PNG images in 24-bit RGB or 32-bit RGBA format is advised. You can also export the bitmap to a standard PNG image file.
+位图就是正在操作的完整图像。在内部，这是一组整数数组，每个像素一个整数。位图可以从多种文件格式导入；不过尚未经过广泛测试，因此建议使用标准的 24 位 RGB 或 32 位 RGBA 格式的 PNG 图像。你也可以将位图导出为标准 PNG 图像文件。
 
-### Bytestream
+### 字节流（Bytestream）
 
-The bytestream is a sequence of bytes that any of the other objects in the workbench can be serialized to, or deserialized from. It can also be imported from or written to a binary file.
+字节流是一系列字节，工作台中的其他对象都可以序列化为字节流，或从字节流反序列化。它也可以从二进制文件导入或写入二进制文件。
 
-### Tileset
+### 图块集（Tileset）
 
-The tileset holds a set of tiles that can be used in conjunction with the tilemap to represent an image. Each tileset has a specific tile size as well as a color format. By default, the tileset has a tile size of 8 by 8 pixels, and uses a 32-RGBA color format.
+图块集保存了一组图块，可以与图块地图结合使用来表示图像。每个图块集有特定的图块尺寸和颜色格式。默认情况下，图块集的图块尺寸为 8x8 像素，使用 32 位 RGBA 颜色格式。
 
-Whenever a tile is added to the tileset, PixelPet will first check whether that tile already exists in the tileset, either as-is, or flipped in the horizontal or vertical direction, or both. If this is the case, then the tile will not be added to the tileset. However, it is possible to disable this behavior if you want to purposely add duplicate tiles to the tileset.
+每当向图块集添加图块时，PixelPet 会先检查该图块是否已存在于图块集中（包括水平或垂直翻转，或两者都翻转的情况）。如果已存在，则不会添加该图块。当然，也可以禁用此行为，以便有意添加重复图块。
 
-The tileset may be unindexed, meaning each pixel value in each tile holds the actual color value that will be displayed, or it may be indexed, meaning each pixel value represents an index in a palette, and the color value that is located in the palette at that index will be displayed instead.
+图块集可以是非索引的，即每个图块中的像素值就是实际显示的颜色值；也可以是索引的，即每个像素值代表调色板中的索引，显示时会用调色板中对应的颜色值。
 
-### Tilemap
+### 图块地图（Tilemap）
 
-The tilemap holds a set of tile display entries, that can be used in conjunction with the tileset to represent an image. Each tile display entry holds the number of the tile, whether the tile should be flipped horizontally and/or vertically, and which palette slot should be used to render the tile (in case the tileset is indexed).
+图块地图保存了一组图块显示条目，可以与图块集结合使用来表示图像。每个条目包含图块编号、是否需要水平/垂直翻转，以及渲染该图块时应使用哪个调色板槽（如果图块集是索引的）。
 
-In PixelPet, the tilemap does not have a specific predefined width or height (i.e. number of tiles per row/column). Instead, tile entries can be added onto the tilemap indefinitely, and the tilemap may then be rendered at various specific widths and heights.
+在 PixelPet 中，图块地图没有特定的预定义宽度或高度（即每行/每列的图块数）。可以无限制地向图块地图添加条目，然后可以以不同的宽度和高度进行渲染。
 
-## Color formats
+## 颜色格式（Color formats）
 
-PixelPet currently supports the following color formats. A color format describes the range of each color component (Red, Green, Blue, and optionally, Alpha), and how these are stored in memory. Names of color formats follow *word order*, e.g. BGR555 is a format where the Blue component is stored in the upper bits and the Red component is stored in the lower bits.
+PixelPet 目前支持以下颜色格式。颜色格式描述了每个颜色分量（红、绿、蓝，以及可选的 Alpha）的范围，以及它们在内存中的存储方式。颜色格式的命名遵循“字顺序”（word order），例如 BGR555 表示蓝色分量存储在高位，红色分量存储在低位。
 
- *  **2BPP** - General 2-bit grayscale, where `0x0` is pure black and `0x3` is pure white.
- *  **4BPP** - General 4-bit grayscale, where `0x0` is pure black and `0xF` is pure white.
- *  **8BPP** - General 8-bit grayscale, where `0x00` is pure black and `0xFF` is pure white.
- *  **GB** - 2-bit grayscale as it is used on the Game Boy, where the luminance is inverted. `0x0` is pure white, and `0x3` is pure black.
- *  **GBA** / **BGR555** - 15-bit color as it is used on the Game Boy Advance, where the Red, Green and Blue components are all 5 bits. `0x0000` is pure black, and `0x7FFF` is pure white.
- *  **NDS** / **ABGR5551** - 16-bit color as it is used on the Nintendo DS, where the Red, Green and Blue components are 5 bits, and the Alpha component is 1 bit. `0x8000` is pure black, and `0xFFFF` is pure white.
- *  **24BPP** / **RGB888** - General 24-bit color, where the Red, Green and Blue components are all 8 bits. `0x000000` is pure black, and `0xFFFFFF` is pure white.
- *  **32BPP** / **ARGB8888** - General 32-bit color, where the Red, Green, Blue and Alpha components are all 8 bits. `0xFF000000` is pure black, and `0xFFFFFFFF` is pure white.
- *  **RGB555** - 15-bit color where the Red, Green and Blue components are all 5 bits. `0x0000` is pure black, and `0x7FFF` is pure white. Here the Blue component occupies the low bits and the Red component occupies the high bits.
+ *  **2BPP** - 通用 2 位灰度，`0x0` 为纯黑，`0x3` 为纯白。
+ *  **4BPP** - 通用 4 位灰度，`0x0` 为纯黑，`0xF` 为纯白。
+ *  **8BPP** - 通用 8 位灰度，`0x00` 为纯黑，`0xFF` 为纯白。
+ *  **GB** - Game Boy 使用的 2 位灰度，亮度取反。`0x0` 为纯白，`0x3` 为纯黑。
+ *  **GBA** / **BGR555** - Game Boy Advance 使用的 15 位颜色，红、绿、蓝分量各 5 位。`0x0000` 为纯黑，`0x7FFF` 为纯白。
+ *  **NDS** / **ABGR5551** - Nintendo DS 使用的 16 位颜色，红、绿、蓝分量各 5 位，Alpha 分量 1 位。`0x8000` 为纯黑，`0xFFFF` 为纯白。
+ *  **24BPP** / **RGB888** - 通用 24 位颜色，红、绿、蓝分量各 8 位。`0x000000` 为纯黑，`0xFFFFFF` 为纯白。
+ *  **32BPP** / **ARGB8888** - 通用 32 位颜色，红、绿、蓝、Alpha 分量各 8 位。`0xFF000000` 为纯黑，`0xFFFFFFFF` 为纯白。
+ *  **RGB555** - 15 位颜色，红、绿、蓝分量各 5 位。`0x0000` 为纯黑，`0x7FFF` 为纯白。此格式中蓝色分量占低位，红色分量占高位。
 
-## Tilemap formats
+## 图块地图格式（Tilemap formats）
 
-PixelPet currently supports the following tilemap formats. A tilemap format contains information about how the tilemap (and by extension, the tileset) is stored. It describes the tile size; whether the image is indexed (meaning a palette is needed to proper display it); the color format used for tiles; how tilemap entries are stored in memory; and the capabilities of the platform (e.g. whether flipping tiles is allowed).
+PixelPet 目前支持以下图块地图格式。图块地图格式包含了关于图块地图（以及图块集）如何存储的信息。它描述了图块尺寸、是否为索引图像（即是否需要调色板才能正确显示）、图块使用的颜色格式、图块地图条目在内存中的存储方式，以及平台的能力（如是否支持图块翻转）。
 
- *  **GB** - 2 bits per pixel tilemap format as it used on the Game Boy, where a pair of 2 bytes collectively holds 8 pixels.
- *  **GBA-4BPP** / **NDS-4BPP** - 4 bits per pixel tilemap format as it is used on the Game Boy Advance and Nintendo DS. This tilemap format uses indexed colors, meaning a palette is required to properly display it. If no suitable palette is loaded, any rendered tiles will be rendered using the general `4BPP` grayscale color format instead.
- *  **GBA-8BPP** / **NDS-8BPP** - 8 bits per pixel tilemap format as it is used on the Game Boy Advance and Nintendo DS. This tilemap format uses indexed colors, meaning a palette is required to properly display it. If no suitable palette is loaded, any rendered tiles will be rendered using the general `8BPP` grayscale color format instead.
+ *  **GB** - Game Boy 使用的每像素 2 位图块地图格式，一对 2 字节共同表示 8 个像素。
+ *  **GBA-4BPP** / **NDS-4BPP** - Game Boy Advance 和 Nintendo DS 使用的每像素 4 位图块地图格式。该格式使用索引色，需要调色板才能正确显示。如果没有加载合适的调色板，渲染时将使用通用 `4BPP` 灰度格式。
+ *  **GBA-8BPP** / **NDS-8BPP** - Game Boy Advance 和 Nintendo DS 使用的每像素 8 位图块地图格式。该格式使用索引色，需要调色板才能正确显示。如果没有加载合适的调色板，渲染时将使用通用 `8BPP` 灰度格式。
 
-## Usage
+## 用法（Usage）
 
-PixelPet currently supports the following commands. Each command is specified as a separate command-line argument, followed by its parameters, also as command-line arguments. For example, to load an input image `input.png` and then store it elsewhere as `output.png`, you would run the following command from your favorite console:
+PixelPet 目前支持以下命令。每个命令作为单独的命令行参数指定，后跟其参数，也作为命令行参数。例如，要加载输入图像 `input.png` 并将其另存为 `output.png`，可以在你喜欢的控制台中运行以下命令：
 
 ```
 PixelPet Import-Bitmap "input.png" Export-Bitmap "output.png"
 ```
 
-Alternatively, you can also place the following in a basic text file `script.txt` (any extension may be used):
+或者，也可以将以下内容写入一个基本文本文件 `script.txt`（扩展名不限）：
 
 ```
 Import-Bitmap "input.png"
 Export-Bitmap "output.png"
 ```
 
-Then, run the script from your console as follows:
+然后，在控制台中运行该脚本：
 
 ```
 PixelPet Run-Script "script.txt"
 ```
 
-## Commands
+## 命令（Commands）
 
 ### Help
 ```
 Help
 ```
 
-Prints the list of commands supported by PixelPet along with their parameters.
+打印 PixelPet 支持的命令及其参数列表。
 
 ### Run-Script
 ```
 Run-Script <path> [--recursive/-r]
 ```
 
-Runs the script from the basic text file specified by `<path>`. Said script can also include further `Run-Script` commands to run even more scripts from different files.
+运行指定 `<path>` 的基本文本文件中的脚本。该脚本还可以包含更多 `Run-Script` 命令，以运行其他文件中的脚本。
 
-By default it is not allowed to recursively include any scripts that are already on the current stack. For instance, if a script named `script.txt` contains the command `Run-Script script.txt`, then an error is thrown. Moreover, if `script1.txt` calls `script2.txt`, which then calls `script1.txt` again, an error is thrown as well. However, this restriction can be disabled by specifying the `--recursive` or `-r` flag.
+默认情况下，不允许递归包含当前堆栈上已存在的脚本。例如，如果名为 `script.txt` 的脚本包含命令 `Run-Script script.txt`，则会抛出错误。此外，如果 `script1.txt` 调用 `script2.txt`，而 `script2.txt` 又调用 `script1.txt`，也会抛出错误。不过，可以通过指定 `--recursive` 或 `-r` 标志来禁用此限制。
 
-**Example usage:**
+**示例用法：**
 ```
 Run-Script "script.txt"
 ```
@@ -121,13 +121,13 @@ Run-Script "script.txt"
 Set-Variable <name> <value>
 ```
 
-Sets the variable with name `<name>` to string `<value>`. If the variable does not exist, it is created. The `<name>` may consist only of alphanumerical characters and underscores (`[A-Za-z0-9_]`).
+将名为 `<name>` 的变量设置为字符串 `<value>`。如果变量不存在，则会创建。`<name>` 只能包含字母、数字和下划线（`[A-Za-z0-9_]`）。
 
-After setting a variable, you can use it in any other command (including another `Set-Variable`) by writing the name of variable surrounded with `<>`. If you pass a parameter containing variable(s) to a command, any variables in the parameter are expanded before the command is executed. Expansion is done by replacing any instance of `<var>`, where `var` is the name of a variable, with the string value of that variable. It is possible to nest parameters, e.g. `<var1<var2>>`.
+设置变量后，可以在任何其他命令（包括另一个 `Set-Variable`）中通过 `<变量名>` 的方式使用该变量。如果向命令传递包含变量的参数，执行命令前会展开参数中的所有变量。展开是通过将 `<var>`（其中 var 是变量名）替换为该变量的字符串值来完成的。可以嵌套参数，例如 `<var1<var2>>`。
 
-When using the `Run-Script` command, all variables are passed to the script as well.
+使用 `Run-Script` 命令时，所有变量也会传递给脚本。
 
-**Example usage:**
+**示例用法：**
 ```
 Set-Variable map_top "map-top.png"
 Set-Variable map_bottom "map-bottom.png"
@@ -135,185 +135,184 @@ Set-Variable layer "top"
 Import-Bitmap "<map_<layer>>"
 ```
 
-Imports the image `map-top.png` to the workbench.
+将图像 `map-top.png` 导入到工作台。
 
 ### Import-Bitmap
 ```
 Import-Bitmap <path> [--format/-f <format>]
 ```
 
-Imports the image file specified by `<path>` to the workbench bitmap. The previous workbench bitmap is discarded. Using standard 24-bit or 32-bit PNG images is advised.
+将指定 `<path>` 的图像文件导入到工作台位图。之前的工作台位图会被丢弃。建议使用标准的 24 位或 32 位 PNG 图像。
 
-If the `--format` option is not present, all pixels in the bitmap will be imported as-is. If it is present, all pixels in the bitmap will be interpreted as if they were in the specified color format.
+如果未指定 `--format` 选项，则所有像素按原样导入。如果指定，则所有像素将按指定的颜色格式解释。
 
-**Example usage:**
-
+**示例用法：**
 ```
 Import-Bitmap "input.png"
 ```
-Imports the image `input.png` to the workbench.
+将图像 `input.png` 导入到工作台。
 
 ### Export-Bitmap
 ```
 Export-Bitmap <path> [--format/-f <format>]
 ```
 
-Exports the workbench bitmap to the file specified by `<path>`. The output bitmap is always stored as a 32-bit image.
+将工作台位图导出到指定 `<path>` 的文件。输出位图始终以 32 位图像存储。
 
-If the `--format` option is not present, all pixels in the bitmap are converted to 32-bit color during export (this does not modify the workbench bitmap). If it is present, the pixels are converted to the given format. Note that since the image itself is stored in 32-bit format, this means the image won't display correctly, but it can be a more convenient way to check color values than exporting to bytes and checking with a hex editor.
+如果未指定 `--format` 选项，则导出时所有像素会转换为 32 位色（不会修改工作台位图）。如果指定，则像素会转换为给定格式。注意，由于图像本身以 32 位格式存储，这意味着图像可能无法正确显示，但比导出为字节再用十六进制编辑器检查更方便。
 
-However, if the chosen color format for `--format` does not contain an alpha channel, `Export-Bitmap` will set the 32-bit alpha channel of all pixels to 255 after conversion.
+不过，如果 `--format` 选择的颜色格式不包含 alpha 通道，`Export-Bitmap` 会在转换后将所有像素的 32 位 alpha 通道设置为 255。
 
-**Example usage:**
+**示例用法：**
 ```
 Export-Bitmap "output.png"
 ```
-Exports the bitmap in the workbench to `output.png`.
+将工作台中的位图导出为 `output.png`。
 
 ### Import-Bytes
 ```
 Import-Bytes <path> [--append/-a] [--offset/-o <count>] [--length/-l <count>]
 ```
 
-Imports the binary file specified by `<path>` to the workbench bytestream. If `--append` is present, then the binary file is appended to the previous  workbench bytestream; otherwise, the previous workbench bytestream is discarded.
+将指定 `<path>` 的二进制文件导入到工作台字节流。如果指定 `--append`，则二进制文件会追加到之前的工作台字节流；否则，之前的字节流会被丢弃。
 
-Optionally, you can use the `--offset` and/or `--length` parameters to specify the offset in the file from which bytes should be read (by default, this is 0), and/or the maximum number of bytes that should be loaded (by default, this is unbounded). Bytes will be loaded until the end of the file or the maximum length is reached, whichever comes first.
+可选地，可以使用 `--offset` 和/或 `--length` 参数指定从文件中读取字节的偏移量（默认为 0）和最大读取字节数（默认为不限制）。字节会一直读取到文件末尾或达到最大长度，以先到者为准。
 
-**Example usage:**
+**示例用法：**
 ```
 Import-Bytes "input.bin" --offset 0x4 --length 0x20
 ```
-Imports `32 (0x20)` bytes from file `input.bin` starting at offset `4 (0x4)`.
+从文件 `input.bin` 的偏移 4（0x4）处开始导入 32（0x20）字节。
 
 ### Export-Bytes
 ```
 Export-Bytes <path>
 ```
 
-Exports the entire workbench bytestream to the file specified by `<path>`.
+将整个工作台字节流导出到指定 `<path>` 的文件。
 
-**Example usage:**
+**示例用法：**
 ```
 Export-Bytes "output.bin"
 ```
-Exports the workbench bytestream to `output.bin`.
+将工作台字节流导出为 `output.bin`。
 
 ### Clear-Palettes
 ```
 Clear-Palettes
 ```
 
-Discards all workbench palettes.
+丢弃所有工作台调色板。
 
 ### Clear-Tileset
 ```
 Clear-Tileset [--tile-size/-s <width> <height>]
 ```
 
-Discards the workbench tileset, and initializes a new one. Optionally, the `--tile-size` parameter can be used to specify the tile width and height (in pixels) for the new tileset. By default, this is 8 by 8 pixels.
+丢弃工作台图块集，并初始化一个新的。可选地，`--tile-size` 参数可用于指定新图块集的图块宽度和高度（像素）。默认是 8x8 像素。
 
 ```
 Clear-Tileset --tile-size 16 16
 ```
-Initializes a new tileset with tile size 16 by 16 pixels.
+初始化一个 16x16 像素的图块集。
 
 ### Clear-Tilemap
 ```
 Clear-Tilemap
 ```
 
-Discards the workbench tilemap, and initializes a new one.
+丢弃工作台图块地图，并初始化一个新的。
 
 ### Extract-Palettes
 ```
 Extract-Palettes [--append/-a] [--palette-number/-pn <number>] [--palette-size/-ps <count>] [--palette-count/-pc <count>] [--x/-x <pixels>] [--y/-y <pixels>] [--width/-w <pixels>] [--height/-h <pixels>] [--tile-size/-s <width> <height>]
 ```
 
-Extracts palettes from the workbench bitmap.
+从工作台位图中提取调色板。
 
-This is done by first splitting the bitmap into tiles. For each tile, we then take the color values present and add these to one of the existing palettes (removing any duplicate colors) if possible, or add a new palette if this does not fit in any of the current palettes.
+首先将位图分割为图块。对于每个图块，取出其中的颜色值，尽可能添加到现有调色板（去除重复色），如果无法加入则新建调色板。
 
-PixelPet attempts to minimize the number of palettes used, but a greedy algorithm is used, so it is not guaranteed that this does lead to the minimum number of palettes. If this is a concern, it may be better to create the templates manually and load them via the `Read-Palettes` command instead.
+PixelPet 尝试最小化使用的调色板数量，但采用贪心算法，因此不保证一定是最少的。如果对此有要求，建议手动创建模板并通过 `Read-Palettes` 命令加载。
 
-If `--append` is present, then the extracted palettes are added to the current workbench palettes. Otherwise, the current workbench palettes are discarded first.
+如果指定 `--append`，则提取的调色板会添加到当前工作台调色板，否则会先丢弃当前调色板。
 
-The `--palette-number` option can be used to specify the initial palette slot number that will be used for any newly created palette. This slot number is increased until an empty slot is found. If this option is not specified, new palettes will get the highest slot number among the loaded palettes + 1.
+`--palette-number` 可指定新建调色板的初始槽编号。该编号会递增直到找到空槽。如果未指定，新调色板会获得已加载调色板中最高编号 + 1。
 
-The `--palette-size` option can be used to specify a maximum palette size for any newly create palette. Palettes that were created before this command is run retain their original maximum palette size. By default, the maximum palette size is unbounded.
+`--palette-size` 可指定新建调色板的最大大小。之前已创建的调色板不受影响。默认最大大小不受限制。
 
-The `--palette-count` option can be used to specify the maximum number of palettes that may be added. If the bitmap requires more palettes, then an error is thrown. By default, the maximum number of palettes that may be added is unbounded.
+`--palette-count` 可指定最多可添加的调色板数量。如果位图需要更多调色板，则会抛出错误。默认不限制数量。
 
-The `--x`, `--y`, `--width` and `--height` options can be used to process only a portion of the workbench bitmap. The workbench bitmap will not be changed, but it will be processed as if it was cropped using the given parameters, and the first tile begins in the top left corner of the cropped bitmap. By default, the entire workbench bitmap is processed.
+`--x`、`--y`、`--width` 和 `--height` 可只处理位图的一部分。位图本身不会改变，但会按裁剪后的区域处理，第一块图块从裁剪后位图的左上角开始。默认处理整个位图。
 
-The `--tile-size` option specifies the size of each tile in pixels. If this option is omitted, then tile size of the current workbench tileset is used. As a special case, when a width and/or height of 0 is specified for `--tile-size`, it will use the width and/or height of the entire workbench bitmap, so e.g. `--tile-size 0 0` will treat the entire bitmap as a single "tile".
+`--tile-size` 指定每个图块的像素大小。如果省略，则使用当前工作台图块集的图块大小。特殊情况：`--tile-size` 的宽度和/或高度为 0 时，会使用整个位图的宽度和/或高度，例如 `--tile-size 0 0` 会将整个位图视为一个“图块”。
 
-**Example usage:**
+**示例用法：**
 ```
 Import-Bitmap "input.png"
 Extract-Palettes --palette-size 16
 ```
-Extracts 16-color palettes from the workbench bitmap.
+从工作台位图中提取 16 色调色板。
 
 ### Read-Palettes
 ```
 Read-Palettes [--append/-a] [--palette-number/-pn <number>] [--palette-size/-ps <count>] [--x/-x <pixels>] [--y/-y <pixels>] [--width/-w <pixels>] [--height/-h <pixels>]
 ```
 
-Reads a palettes from a *palette image* loaded into the workbench bitmap. The colors read from the palette image are loaded into new palette(s).
+从加载到工作台位图的*调色板图像*中读取调色板。读取的颜色会加载到新调色板中。
 
-This command can be used to load a predefined set of palettes. The palettes are stored as a *palette image*; an image consisting of 8 by 8 pixel blocks of a solid color, where each block represents one color in the palette. For example, a palette with 16 colors can be represented as a 128 by 8 pixels palette image. The blocks are read left-to-right, top-to-bottom. If any 8 by 8 pixel block does not consist solely of pixels with the exact same color value, an error will be thrown.
+该命令可用于加载预定义的调色板集合。调色板以*调色板图像*的形式存储：由 8x8 像素的纯色块组成的图像，每个色块代表调色板中的一种颜色。例如，16 色调色板可用 128x8 像素的调色板图像表示。色块按从左到右、从上到下读取。如果某个 8x8 色块不是完全相同的颜色，则会抛出错误。
 
-This command differs from `Extract-Palettes` in that the user specifies the palette explicitly; this allows for e.g. duplicate colors to be added, which would be removed if `Extract-Palettes` is used.
+该命令与 `Extract-Palettes` 不同，用户可显式指定调色板，因此可以添加重复色（`Extract-Palettes` 会去除重复色）。
 
-If `--append` is present, then the read palettes are added to the current workbench palettes. Otherwise, the current workbench palettes are discarded first.
+如果指定 `--append`，则读取的调色板会添加到当前工作台调色板，否则会先丢弃当前调色板。
 
-The `--palette-number` option can be used to specify the initial palette slot number that will be used for any newly created palette. This slot number is increased until an empty slot is found. If this option is not specified, new palettes will get the highest slot number among the loaded palettes + 1.
+`--palette-number` 可指定新建调色板的初始槽编号。该编号会递增直到找到空槽。如果未指定，新调色板会获得已加载调色板中最高编号 + 1。
 
-The `--palette-size` option can be used to specify the maximum palette size for the newly created palettes. Once the maximum size for the current palette is reached, a new palette is added. As such, by using the `--palette-size` option, multiple palettes can be read at once. If the `--palette-size` option is not used, all colors will be placed into a single, unbounded palette.
+`--palette-size` 可指定新建调色板的最大大小。达到最大后会新建调色板，因此可一次读取多个调色板。如果未指定，所有颜色会放入一个不受限制的调色板。
 
-The `--x`, `--y`, `--width` and `--height` options can be used to process only a portion of the workbench bitmap. The workbench bitmap will not be changed, but it will be processed as if it was cropped using the given parameters, and the first tile begins in the top left corner of the cropped bitmap. By default, the entire workbench bitmap is processed.
+`--x`、`--y`、`--width` 和 `--height` 可只处理位图的一部分。位图本身不会改变，但会按裁剪后的区域处理，第一块图块从裁剪后位图的左上角开始。默认处理整个位图。
 
-**Example usage:**
+**示例用法：**
 ```
 Import-Bitmap "128x16.png"
 Read-Palettes --palette-size 16
 ```
-Imports a 128 by 16 pixels palette image representing 2 palettes of 16 colors. Then, reads the 2 palettes from the palette image.
+导入一个 128x16 像素的调色板图像，表示两个 16 色调色板，然后从调色板图像中读取这两个调色板。
 
 ### Render-Palettes
 ```
 Render-Palettes [--colors-per-row/-cw <count>]
 ```
 
-Renders the workbench palettes as a *palette image*, and writes this to the workbench bitmap. The old workbench bitmap is discarded. This is the same sort of palette image as is used for the `Read-Palettes` command. Each loaded palette is placed on a separate row, with each color rendered as an 8-by-8 pixels square.. The palette image is converted/rendered in 32-bit color.
+将工作台调色板渲染为*调色板图像*，并写入工作台位图。原有位图会被丢弃。这与 `Read-Palettes` 命令使用的调色板图像相同。每个已加载的调色板占据一行，每种颜色渲染为 8x8 像素的色块。调色板图像以 32 位色渲染。
 
-The `--colors-per-row` option can be used to specify the number of colors that are rendered per row. If there are more colors than fit on the row, then the colors wrap around to the next row. If the end of a palette is reached, but there is still room on the current row, then PixelPet moves on to the next row regardless and leaves the remainder of the current row empty. This option can be used e.g. to render a 256-color palette as a 16-by-16 color palette image rather than a 256-by-1 color palette image. If the `--colors-per-row` option is not specified, the palette image will use the width of the largest palette.
+`--colors-per-row` 可指定每行渲染的颜色数。如果颜色数超过一行，则自动换行。如果一行未满但调色板已结束，则直接换行，剩余部分留空。该选项可用于将 256 色调色板渲染为 16x16 的调色板图像，而不是 256x1。未指定时，调色板图像宽度为最大调色板的宽度。
 
-**Example usage:**
+**示例用法：**
 ```
 Import-Bitmap "input-16-color.png"
 Extract-Palettes --palette-size 16
 Render-Palettes
 Export-Bitmap "palette.png"
 ```
-Imports a 16-color image, generates a 16-color palette from it, renders this palette as a palette image, and then writes this palette image to `palette.png`.
+导入 16 色图像，生成 16 色调色板，渲染为调色板图像，并写入 `palette.png`。
 
 ### Render-Tileset
 ```
 Render-Tileset [--tiles-per-row/-tw <count>] [--format/-f <format>]
 ```
 
-Renders the workbench tileset as an image, and writes this to the workbench bitmap. The old workbench bitmap is discarded.
+将工作台图块集渲染为图像，并写入工作台位图。原有位图会被丢弃。
 
-If the workbench tileset uses indexed colors, then the workbench palettes are used when rendering the tiles. If there is a palette loaded with the same slot number as the palette that was originally used to index the tile, then that palette is used to render the tile. If there is no longer a palette loaded with that slot number, then the first palette that is currently loaded is used. Otherwise, if there are no palettes loaded at all, the tile is rendered using a generic grayscale palette.
+如果图块集使用索引色，则渲染时会用工作台调色板。如果有与原索引调色板编号相同的调色板，则用该调色板渲染；否则用当前已加载的第一个调色板；如果没有调色板，则用通用灰度调色板渲染。
 
-If the workbench tileset does not used indexed colors, then each pixel is rendered as-is.
+如果图块集不使用索引色，则每个像素按原样渲染。
 
-The `--tiles-per-row` option can be used to specify how many tiles should be rendered per row. By default, this is 32 tiles. For a tileset using 8 by 8 pixel tiles, this results in a tileset image that is 256 pixels wide. The height of the tileset image is computed automatically.
+`--tiles-per-row` 可指定每行渲染的图块数。默认是 32 个图块。对于 8x8 像素的图块集，渲染图像宽度为 256 像素，高度自动计算。
 
-If the `--format` option is present, the tileset image is rendered using the specified color format; otherwise it is rendered in 32-bit color.
+如果指定 `--format`，则用指定颜色格式渲染，否则用 32 位色渲染。
 
-**Example usage:**
+**示例用法：**
 ```
 Import-Bitmap "input.png"
 Extract-Palettes
@@ -321,20 +320,20 @@ Generate-Tilemap GBA-4BPP
 Render-Tileset --tiles-per-row 16
 Export-Bitmap "tileset.png"
 ```
-Imports an image, generates a palette from it, generates a tilemap+tileset. Renders this tileset as an image with 16 tiles per row, and then writes this rendered tileset to `tileset.png`.
+导入图像，生成调色板，生成图块地图+图块集，将图块集渲染为每行 16 个图块的图像，并写入 `tileset.png`。
 
 ### Render-Tilemap
 ```
 Render-Tilemap <tiles-per-row> <tiles-per-column>
 ```
 
-Renders the workbench tilemap + tileset together as an image, and writes this to the workbench bitmap. The old workbench bitmap is discarded. The tilemap is rendered in 32-bit color.
+将工作台图块地图和图块集一起渲染为图像，并写入工作台位图。原有位图会被丢弃。图块地图以 32 位色渲染。
 
-Unlike the `Render-Tileset` command, both `<tiles-per-row>` and `<tiles-per-column>` must be specified. These indicate the number of tiles per row and column that will be rendered. For example, `Render-Tilemap 30 20` with 8 by 8 pixel tiles results in a bitmap of 240 by 160 pixels.
+与 `Render-Tileset` 不同，必须同时指定 `<tiles-per-row>` 和 `<tiles-per-column>`，分别表示每行和每列渲染的图块数。例如，`Render-Tilemap 30 20` 且图块为 8x8 像素时，结果为 240x160 像素的位图。
 
-The tile entries in the tilemap are rendered left-to-right, top-to-bottom.
+图块地图条目按从左到右、从上到下渲染。
 
-**Example usage:**
+**示例用法：**
 ``` 
 Import-Bytes "tilemap.bin"
 Deserialize-Tilemap
@@ -343,323 +342,323 @@ Deserialize-Tileset GBA-4BPP
 Render-Tilemap 30 20
 Export-Bitmap "tilemap.png"
 ```
-Imports and deserializes a tilemap and tileset from binary files. Then, renders the tilemap + tileset to a 240 by 160 pixel image, and then writes this rendered tilemap to `tilemap.png`.
+导入并反序列化二进制文件中的图块地图和图块集，然后渲染为 240x160 像素的图像，并写入 `tilemap.png`。
 
 ### Crop-Bitmap
 ```
 Crop-Bitmap [--x/-x <pixels>] [--y/-y <pixels>] [--width/-w <pixels>] [--height/-h <pixels>]
 ```
 
-Crops the workbench bitmap using the specified parameters. The `--x` and `--y` options specify the x- and y-offset of the left and top edges respectively, whereas the `--width` and `--height` options specify the new width and height of the bitmap respectively. If any of the specified parameters fall outside the range of the original bitmap, they will be automatically adjusted to the bounds of the bitmap.
+使用指定参数裁剪工作台位图。`--x` 和 `--y` 指定左上角的 x、y 偏移，`--width` 和 `--height` 指定新位图的宽度和高度。如果参数超出原位图范围，会自动调整到位图边界。
 
-**Example usage:**
+**示例用法：**
 ```
 Crop-Bitmap --width 32 --height 32
 ```
-Crops the workbench bitmap to the top-left 32 by 32 pixels.
+将工作台位图裁剪为左上角 32x32 像素。
 
 ### Convert-Bitmap
 ```
 Convert-Bitmap <format> [--sloppy/-s]
 ```
 
-Converts the workbench bitmap to the specified color format.
+将工作台位图转换为指定颜色格式。
 
-By default, most command produce a workbench bitmap that uses 32-bit color. Before the bitmap can be further processed for display on a retro console's display, usually, it must be converted to the proper color format first.
+默认情况下，大多数命令生成的工作台位图为 32 位色。通常在进一步处理以适配复古主机显示前，需要先转换为合适的颜色格式。
 
-For every pixel in the bitmap, the Red, Green, Blue and Alpha components of each color value are scaled as follows:
+对于每个像素的红、绿、蓝、Alpha 分量，按如下方式缩放：
 
 ```
 out = (in + (in_max / 2) * out_max) / in_max
 ```
-Where each division floors the result.
+每次除法向下取整。
 
-This is roughly equivalent to the following:
+大致等价于：
 ```
 out = in * out_max / in_max
 ```
-Where each division applies rounding in the correct direction.
+每次除法按正确方向取整。
 
-For example, converting a 5-bit color component `31` to an 8-bit color component goes as follows:
+例如，将 5 位色分量 `31` 转为 8 位色分量：
 ```
 31 * 255 / 31 = 255
 ```
 
-However, many emulators and other image processing tools instead use an incorrect color scaling algorithm, where the color component is simply left-shifted, and the added bits are simply filled with zeroes. For example, again converting 5-bit color component `31` to 8-bit, the conversion is performed as follows:
+但许多模拟器和图像处理工具使用了错误的色彩缩放算法，即直接左移并用零填充。例如，同样将 5 位色分量 `31` 转为 8 位：
 ```
 31 << 3 = 248
 ```
 
-Or, vice versa:
+反之亦然：
 ```
 248 >> 3 = 31
 ```
 
-By specifying the `--sloppy` option, PixelPet can use this bit-shift color scaling algorithm instead. This can be used to process images that have been ripped from inaccurate emulators.
+指定 `--sloppy` 选项时，PixelPet 会采用这种位移缩放算法。可用于处理从不准确模拟器提取的图像。
 
-**Example usage:**
+**示例用法：**
 ```
 Import-Bitmap "input.png"
 Convert-Bitmap GBA --sloppy
 Convert-Bitmap 32BPP
 Export-Bitmap "output.png"
 ```
-This loads a 32-bit image `input.png` which has been ripped from an inaccurate emulator, converts it back to its original GBA color format with the `--sloppy` option, and then converts it back to a 32-bit image using proper color scaling; effectively "fixing" the image. The fixed image is then written to `output.png`.
+加载一张从不准确模拟器提取的 32 位图像 `input.png`，用 `--sloppy` 选项转换回原始 GBA 色彩格式，再用正确缩放转换回 32 位色，最终写入 `output.png`，实现“修复”图像。
 
 ### Convert-Palettes
 ```
 Convert-Palettes <format> [--sloppy/-s]
 ```
 
-Converts all workbench palettes from their current color format to the specified color format.
+将所有工作台调色板从当前颜色格式转换为指定颜色格式。
 
-This is very similar to the `Convert-Bitmap` command, but instead of operating on each pixel in the workbench bitmap, it operates on each color in the workbench palettes. Note that this is almost always faster than `Convert-Bitmap`.
+与 `Convert-Bitmap` 类似，但操作对象为调色板中的每个颜色。通常比 `Convert-Bitmap` 更快。
 
 ### Deduplicate-Palettes
 ```
 Deduplicate-Palettes [--global/-g]
 ```
 
-Replaces all duplicate colors in all workbench palettes with new, unique colors.
+将所有工作台调色板中的重复颜色替换为新的唯一颜色。
 
-This command uses a binary search algorithm that runs in `O(m log 2^n)`, where `m` is the number of new colors that need to be generated, and `n` is number of bits in the color space, and is guaranteed to generate unique colors -- as long as the total palette size does not exceed the size of the color space.
+该命令使用二分查找算法，复杂度为 `O(m log 2^n)`，其中 `m` 为需生成的新颜色数，`n` 为色彩空间的位数，保证生成的颜色唯一（只要总调色板大小不超过色彩空间大小）。
 
-The new colors generated by `Deduplicate-Palettes` are random and not guaranteed to be consistent. However, they should be consistent on subsequent runs of the same PixelPet binary.
+`Deduplicate-Palettes` 生成的新颜色是随机的，不保证一致性，但在同一 PixelPet 二进制文件的多次运行中应保持一致。
 
-Normally, color deduplication is applied within each palette individually. However, if the `--global` flag is provided, then deduplication is applied to all palettes as a whole. For instance, if the workbench has two palettes with the exact same color, then with the `--global` flag, one of those colors will be replaced by a new color. The `--global` flag requires that all palettes in the workbench have the same color format.
+通常，去重在每个调色板内单独进行。如果指定 `--global`，则对所有调色板整体去重。例如，若有两个调色板有完全相同的颜色，`--global` 时其中一个会被替换。`--global` 要求所有调色板颜色格式一致。
 
 ### Pad-Palettes
 ```
 Pad-Palettes <width> [--color/-c <value>] [--palette-size/-ps <count>]
 ```
 
-Pads all workbench palettes by adding colors until the palette has at least the specified width.
+通过添加颜色将所有工作台调色板填充到至少指定宽度。
 
-The `--color` option can be used to specify which color value will be added; by default, this is color value 0.
+`--color` 可指定添加的颜色值，默认是 0。
 
-If there are no palettes in the workbench, a palette is created and filled to the specified width. The `--palette-size` option specifies the maximum size of the palette which is added. If this option is not specified, the maximum size is unbounded.
+如果工作台没有调色板，会新建一个并填充到指定宽度。`--palette-size` 指定新建调色板的最大大小，未指定则不限制。
 
-**Example usage:**
+**示例用法：**
 ```
 Import-Bitmap "input.png"
 Extract-Palettes --palette-size 16
 Pad-Palettes 16
 ```
-Imports the image `input.png`, extracts palettes from it and then pads all palettes to 16 colors.
+导入图像 `input.png`，提取调色板并填充到 16 色。
 
 ### Pad-Tileset
 ```
 Pad-Tileset <width> [--color/-c <value>] [--tile-size/-s <width> <height>]
 ```
 
-Pads the workbench tileset by adding tiles until the tileset has at least the specified number of tiles.
+通过添加图块将工作台图块集填充到至少指定数量。
 
-The `--color` option specifies the color value with which to fill all added tiles. If this is omitted, color value 0 is used.
+`--color` 指定填充图块的颜色值，省略则为 0。
 
-The `--tile-size` option specifies the size of each tile in pixels. If this is omitted, the tile size of the current tileset will be used. If the current tileset is nonempty, the tile size specified with `--tile-size` must match the tile size of the current tileset.
+`--tile-size` 指定每个图块的像素大小，省略则用当前图块集的大小。如果当前图块集非空，指定的大小必须与其一致。
 
 ### Generate-Tilemap
 ```
 Generate-Tilemap <format> [--append/-a] [--no-reduce/-nr] [--x/-x <pixels>] [--y/-y <pixels>] [--width/-w <pixels>] [--height/-h <pixels>] [--tile-size/-s <width> <height>]
 ```
 
-Generates a tilemap + tileset from the workbench bitmap. The bitmap is processed left-to-right, top-to-bottom.
+从工作台位图生成图块地图和图块集。位图按从左到右、从上到下处理。
 
-The `<format>` parameter specifies the tilemap format that is used. This also specifies whether the generated tiles will be indexed. Note that, to generate indexed tiles, the appropriate palettes must first be loaded or extracted.
+`<format>` 参数指定使用的图块地图格式，也决定生成的图块是否为索引色。注意，生成索引色图块前需先加载或提取合适的调色板。
 
-If `--append` is present, then any new tilemap entries and tiles are appended to the current workbench tilemap and tileset. Otherwise, both the current tilemap and tileset are cleared first.
+如果指定 `--append`，则新生成的图块地图和图块会追加到当前工作台，否则会先清空。
 
-By default, PixelPet will attempt to reduce the number of tiles in the tileset by eliminating tiles that are already in the tileset, either as-is or flipped horizontally, vertically or in both directions -- provided that the tilemap format supports this. However, you can use the `--no-reduce` option to disable this; if this option is present, PixelPet will add every single tile from the workbench bitmap to the tileset as a new tile.
+默认情况下，PixelPet 会尝试通过去除已存在（包括翻转）的图块来减少图块数量（前提是格式支持）。可用 `--no-reduce` 禁用此行为，强制每个图块都加入。
 
-The `--x`, `--y`, `--width` and `--height` options can be used to process only a portion of the workbench bitmap. The workbench bitmap will not be changed, but it will be processed as if it was cropped using the given parameters, and the first tile begins in the top left corner of the cropped bitmap. By default, the entire workbench bitmap is processed.
+`--x`、`--y`、`--width` 和 `--height` 可只处理位图的一部分。位图本身不会改变，但会按裁剪后的区域处理，第一块图块从裁剪后位图的左上角开始。默认处理整个位图。
 
-The `--tile-size` option specifies the size of each tile in pixels. If this is omitted, the tile size of the current tileset will be used. If the current tileset is nonempty, the tile size specified with `--tile-size` must match the tile size of the current tileset.
+`--tile-size` 指定每个图块的像素大小，省略则用当前图块集的大小。如果当前图块集非空，指定的大小必须与其一致。
 
-**Example usage:**
+**示例用法：**
 ```
 Import-Bitmap "input-256-colors.png"
 Extract-Palettes --palette-size 256
 Generate-Tilemap GBA-8BPP
 ```
-This imports an image `input-256-colors.png`, extracts a 256-color palette from it, and then uses the palette to generate an optimized tilemap + tileset in the `GBA-8BPP` indexed tilemap format.
+导入 `input-256-colors.png`，提取 256 色调色板，然后用该调色板生成优化后的 `GBA-8BPP` 索引图块地图和图块集。
 
 ### Deserialize-Palettes
 ```
 Deserialize-Palettes <format> [--append/-a] [--palette-number/-pn <number>] [--palette-size/-ps <count>] [--palette-count/-pc <count>] [--offset/-o <count>]
 ```
 
-Deserializes a series of palettes from the workbench bytestream. `<format>` specifies the color format in which the palettes are stored.
+从工作台字节流反序列化一系列调色板。`<format>` 指定调色板的颜色格式。
 
-By default this command will read from the start to the end of the bytestream, one unbounded palette. The `--palette-size` option can be used to specify the size of each palette; once the maximum number of colors for the palette has been reached, PixelPet will create a new one, until the end of the bytestream is reached. The `--palette-count` option can be used to set a maximum on the number of palettes, to stop reading earlier.
+默认从字节流起始读到末尾，生成一个不受限制的调色板。`--palette-size` 可指定每个调色板的大小，达到后新建调色板，直到读完。`--palette-count` 可限制调色板数量，提前停止。
 
-If `--append` is present, then the new palettes will be added to the current workbench palettes. Otherwise, the current palettes are first discarded.
+指定 `--append` 时，新调色板会追加到当前工作台，否则会先清空。
 
-The `--palette-number` option can be used to specify the initial palette slot number that will be used for any newly created palette. This slot number is increased until an empty slot is found. If this option is not specified, new palettes will get the highest slot number among the loaded palettes + 1.
+`--palette-number` 可指定新建调色板的初始槽编号，递增直到空槽。未指定则为已加载调色板中最高编号 + 1。
 
-Finally, the `--offset` option can be used to specify an offset in the bytestream from which to start reading.
+`--offset` 可指定从字节流的偏移处开始读取。
 
-**Example usage:**
+**示例用法：**
 ```
 Import-Bytes "rom.gba"
 Deserialize-Palettes GBA --palette-size 16 --palette-count 2 --offset 0x600000
 ```
-Imports a ROM `rom.gba`, and reads two 16-color, GBA color format palettes from it at offset `0x600000`.
+导入 ROM `rom.gba`，并从偏移 `0x600000` 处读取两个 16 色 GBA 格式调色板。
 
 ### Serialize-Palettes
 ```
 Serialize-Palettes [--append/-a]
 ```
 
-Serializes all palettes currently in the workbench to the workbench bytestream. Each color is serialized in accordance with its current color format; for instance, a 15-bit color palette is serialized as 2 bytes per color. The palettes are serialized in the order that they were added to the workbench.
+将当前所有工作台调色板序列化到字节流。每种颜色按当前格式序列化，例如 15 位色调色板每色 2 字节。调色板按添加顺序序列化。
 
-If `--append` is present, then the serialized palettes are appended to the current workbench bytestream. Otherwise, the current workbench bytestream is discarded first.
+指定 `--append` 时，序列化结果追加到当前字节流，否则会先清空。
 
 ### Deserialize-Tileset
 ```
 Deserialize-Tileset <tilemap-format> [--append/-a] [--tile-count/-tc <count>] [--offset/-o <count>] [--tile-size/-s <width> <height>]
 ```
 
-Deserializes a tileset from the workbench bytestream.
+从工作台字节流反序列化图块集。
 
-If `--append` is present, then the tiles are added to the existing workbench tileset; otherwise, the current tileset is discarded.
+指定 `--append` 时，图块追加到当前图块集，否则会先清空。
 
-The `<tilemap-format>` parameter specifies the tilemap format that is used. By default this command will begin deserializing from the start of the workbench bytestream until the end; however, the `--offset` option can be used to specify the starting address, and `--tile-count` can be used to specify the number of tiles that should be read. PixelPet will read tiles from the workbench bytestream until the number of tiles specified by `--tile-count` is reached, or the end of the bytestream is reached; whichever comes first.
+`<tilemap-format>` 参数指定使用的图块地图格式。默认从字节流起始读到末尾，可用 `--offset` 指定起始地址，`--tile-count` 指定读取图块数，达到后停止。
 
-The `--tile-size` option specifies the size of each tile in pixels. If this is omitted, the tile size of the current tileset will be used. If the current tileset is nonempty, the tile size specified with `--tile-size` must match the tile size of the current tileset.
+`--tile-size` 指定每个图块的像素大小，省略则用当前图块集的大小。如果当前图块集非空，指定的大小必须与其一致。
 
-**Example usage:**
+**示例用法：**
 ```
 Import-Bytes "rom.gba"
 Deserialize-Tileset GBA-4BPP --tile-count 0x20 --offset 0x700000
 ```
-Imports a ROM `rom.gba`, and reads 32 (`0x20`) tiles in GBA-4BPP format from offset `0x700000`.
+导入 ROM `rom.gba`，并从偏移 `0x700000` 处读取 32（0x20）个 GBA-4BPP 格式图块。
 
 ### Serialize-Tileset
 ```
 Serialize-Tileset [--append/a]
 ```
 
-Serializes the entire workbench tileset to the workbench bytestream. Each tile is serialized in accordance with its current color format; for instance, an 8 by 8 pixels, 4BPP tile is serialized to 32 bytes. The tiles are serialized in the order that they were added to the workbench tileset.
+将整个工作台图块集序列化到字节流。每个图块按当前格式序列化，例如 8x8 像素 4BPP 图块为 32 字节。图块按添加顺序序列化。
 
-If `--append` is present, the serialized tileset is appended to the end of the workbench bytestream. Otherwise, the previous workbench bytestream is discarded.
+指定 `--append` 时，序列化结果追加到当前字节流，否则会先清空。
 
 ### Deserialize-Tilemap
 ```
 Deserialize-Tilemap <tilemap-format> [--append/-a] [--base-tile/-bt <index>] [--tile-count/-tc <count>] [--offset/-o <count>]
 ```
 
-Deserializes a tilemap from the workbench bytestream.
+从工作台字节流反序列化图块地图。
 
-The `<tilemap-format>` parameter specifies the tilemap format of the serialized tilemap.
+`<tilemap-format>` 参数指定序列化图块地图的格式。
 
-If `--append` is present, the tilemap entries are added to the existing workbench tilemap. Otherwise, the workbench tilemap is cleared first.
+指定 `--append` 时，条目追加到当前图块地图，否则会先清空。
 
-The `--base-tile` option can be used to specify the tile number that corresponds with the first tile in the tileset. Whichever value is specified for `--base-tile` will be subtracted from the tile numbers referenced in the tilemap as it is being deserialized. By default this is 0.
+`--base-tile` 可指定与图块集第一个图块对应的编号，反序列化时会从条目编号中减去该值。默认是 0。
 
-By default this command begins deserializing from the start of the workbench bytestream, until the end of the bytestream is reached. The `--offset` option can be used to specify the offset in the bytestream from which to begin deserializing. The `--tile-count` option can be used to specify how many tilemap entries should be read; PixelPet will deserialize tilemap entries until the `--tile-count` is reached, or the end of the bytestream is reached; whichever comes first.
+默认从字节流起始读到末尾，可用 `--offset` 指定起始地址，`--tile-count` 指定读取条目数，达到后停止。
 
-**Example usage:**
+**示例用法：**
 ```
 Import-Bytes "rom.gba"
 Deserialize-Tilemap --tile-count 600 --offset 0x800000
 ```
-Imports a ROM `rom.gba`, and reads 600 tilemap entries from offset `0x800000`. This could, for instance, correspond to a tilemap which is 30 by 20 tiles large.
+导入 ROM `rom.gba`，并从偏移 `0x800000` 处读取 600 个图块地图条目。例如对应 30x20 的图块地图。
 
 ### Serialize-Tilemap
 ```
 Serialize-Tilemap [--append/-a] [--base-tile/-bt <index>] [--first-tile/-ft <tilemap-entry>]
 ```
 
-Serializes the entire workbench tilemap to the workbench bytestream. Currently this command is hardcoded to use the GBA tilemap format.
+将整个工作台图块地图序列化到字节流。目前该命令硬编码为 GBA 图块地图格式。
 
-If `--append` is present, the serialized tilemap is append to the end of the workbench bytestream. Otherwise, the previous workbench bytestream is discarded.
+指定 `--append` 时，序列化结果追加到当前字节流，否则会先清空。
 
-The `--base-tile` option can be used to specify the tile number that corresponds with the first tile in the tileset. Whichever value is specified for `--base-tile` will be added to the tile numbers referenced in the tilemap as it is being serialized. By default this is 0.
+`--base-tile` 可指定与图块集第一个图块对应的编号，序列化时会加到条目编号上。默认是 0。
 
-The `--first-tile` option can be used to replace any references to the very first tile in the tileset with a fixed value. For instance, one may want to set a `--base-tile` for the tileset but still use tile number 0 for the transparent tile; in this case, the value of the tilemap entry for the first tile can be specified with `--first-tile` directly.
+`--first-tile` 可将所有引用第一个图块的条目替换为指定值。例如，可以为图块集设置 `--base-tile`，但仍用 0 号图块作为透明图块，此时可用 `--first-tile` 指定条目值。
 
-**Example usage:**
+**示例用法：**
 ```
 Import-Bitmap "input-16-colors.png"
 Extract-Palettes --palette-size 16
 Generate-Tilemap GBA-4BPP
 Serialize-Tilemap --base-tile 31 --first-tile 0
 ```
-Imports an image `input-16-colors.png`, generates a 16-color palette from it, generates a tileset + tilemap, then serializes the tilemap whilst adding 31 to all tile numbers and using the value 0 for tilemap entries that reference the first tile.
+导入 `input-16-colors.png`，生成 16 色调色板，生成图块集+图块地图，序列化时所有图块编号加 31，引用第一个图块的条目用 0。
 
 ### Deserialize-Bitmap
 ```
 Deserialize-Bitmap <format> <width> <height> [--offset/-o <count>]
 ```
 
-Deserializes a bitmap from the workbench bytestream to the workbench bitmap.
+从工作台字节流反序列化位图到工作台位图。
 
-The `<format>` parameter specifies the color format in which the bitmap is stored.
+`<format>` 参数指定位图的颜色格式。
 
-The `<width>` and `<height>` parameters specify the width and height of the bitmap in pixels.
+`<width>` 和 `<height>` 参数指定位图的像素宽度和高度。
 
-By default this command begins deserializing from the start of the workbench bytestream, until a `<width>` times `<height>` pixels are read.. The `--offset` option can be used to specify the offset in the bytestream from which to begin deserializing.
+默认从字节流起始读 `<width>*<height>` 个像素，可用 `--offset` 指定起始地址。
 
-**Example usage:**
+**示例用法：**
 ```
 Import-Bytes "rom.gba"
 Deserialize-Bitmap GBA 256 256 --offset 0x800000
 ```
-Imports a ROM `rom.gba`, and deserializes a 256x256 bitmap from offset `0x800000`.
+导入 ROM `rom.gba`，并从偏移 `0x800000` 处反序列化 256x256 位图。
 
 ### Serialize-Bitmap
 ```
 Serialize-Bitmap [--append/-a]
 ```
 
-Serializes the workbench bitmap to the workbench bytestream. The current color format of the workbench bitmap is used.
+将工作台位图序列化到字节流，使用当前位图的颜色格式。
 
-If `--append` is present, the serialized tilemap is append to the end of the workbench bytestream. Otherwise, the previous workbench bytestream is discarded.
+指定 `--append` 时，序列化结果追加到当前字节流，否则会先清空。
 
-**Example usage:**
+**示例用法：**
 ```
 Import-Bitmap "input.png"
 Convert-Bitmap GBA
 Serialize-Bitmap
 ```
-Imports a bitmap `input.png`, converts it to GBA colors, then serializes it to the workbench bytestream.
+导入位图 `input.png`，转换为 GBA 色彩，再序列化到字节流。
 
 ### Apply-Palette-Bitmap
 ```
 Apply-Bitmap-Palette [--palette-number/-pn <number>]
 ```
 
-Applies a palette to the entire workbench bitmap. For this to work, the workbench bitmap must be in a color format that can be used as palette indices (e.g. 8BPP). After this command finishes, the color indices in the bitmap will have been replaced by the actual colors stored in the palette.
+将调色板应用到整个工作台位图。为此，位图必须为可用作调色板索引的颜色格式（如 8BPP）。命令执行后，位图中的颜色索引会被调色板中的实际颜色替换。
 
-If the `--palette-number` option is specified, the palette with the given number is used. Otherwise, this command will use the palette with the lowest number that has enough colors to be applied to the bitmap.
+如果指定 `--palette-number`，则用该编号的调色板，否则用编号最低且颜色数足够的调色板。
 
-Only one single palette can be applied to the whole bitmap. In order to use multiple palettes, use `Render-Tileset` or `Render-Tilemap` to render indexed tiles instead.
+只能对整个位图应用单一调色板。如需多调色板，请用 `Render-Tileset` 或 `Render-Tilemap` 渲染索引图块。
 
-**Example usage:**
+**示例用法：**
 ```
 Import-Bytes "rom.gba"
 Deserialize-Bitmap GBA-4BPP 256 256 0x800000
 Deserialize-Palettes GBA --offset 0x700000 --length 0x20
 Apply-Palette-Bitmap
 ```
-Imports a ROM `rom.gba`, deserializes a 256x256 4BPP image from `0x800000` and a 16-color palette from `0x700000`, then applies the palette to the bitmap.
+导入 ROM `rom.gba`，从 `0x800000` 反序列化 256x256 4BPP 图像，从 `0x700000` 反序列化 16 色调色板，然后将调色板应用到位图。
 
 ### Quantize-Bitmap
 ```
 Quantize-Bitmap <format> [--palette-number/-pn <number>]
 ```
 
-Quantizes the workbench bitmap using a palette. After this command finishes, all actual colors in the bitmap will have been replaced by color indices used with a palette.
+使用调色板对工作台位图进行量化。命令执行后，位图中的实际颜色会被调色板索引替换。
 
-The `<format>` parameter specifies the color format used for the resulting color index pixels. This color format is used when serializing or rendering without palettes loaded. For example, when using a 16-color palette, the resulting pixels will probably be 4BPP.
+`<format>` 参数指定量化后像素的颜色格式。序列化或渲染时，若未加载调色板，将用此格式。例如，16 色调色板通常用 4BPP。
 
-If the `--palette-number` option is specified, the palette with the given number is used. Otherwise, this command will use the palette with the lowest number that contains all colors used in the bitmap.
+如果指定 `--palette-number`，则用该编号的调色板，否则用包含所有位图颜色的编号最低的调色板。
 
-**Example usage:**
+**示例用法：**
 ```
 Import-Bytes "rom.gba"
 Import-Bitmap "input.png"
 Deserialize-Palettes GBA --offset 0x700000 --length 0x20
 Quantize-Bitmap GBA-4BPP
 ```
-Imports a ROM `rom.gba` and a bitmap `input.png`, deserializes a 16-color palette from `0x700000`, then quantizes the bitmap to 4BPP using the loaded palette.
+导入 ROM `rom.gba` 和位图 `input.png`，从 `0x700000` 反序列化 16
